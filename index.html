@@ -1,0 +1,89 @@
+<html>
+<head>
+<script src="jquery.js"></script>
+<script src="angular.js"></script>
+<script src="angular-datatables.min.js"></script>
+<script src="jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="bootrap.css">
+<link rel="stylesheet" href="datatables.bootstrap.css">
+         <link href="fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+</head>
+<body ng-app="myApp" ng-controller="deviceCtrl" data-ng-init="init()">
+
+<div class="container">
+<h1>Demo : Mobile Device Management</h1>
+    <br>
+  <table class="table table-striped table-bordered" datatable="ng" dt-options="vm.dtOptions">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Camera Status</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="user in device">
+        <td>
+          {{user.device_id}}
+        </td>
+        <td>{{user.device_name}}</td>
+          <td>{{user.status}}</td>
+		<td><div class="btn-group">
+                <button type="button" class="btn btn-default btn" ng-click="sendcommand(user.token,user.device_id,user.status=='on'?'off':'on')"><i class="fa fa-pencil"></i></button>  
+                <button type="button" class="btn btn-default btn" ng-click="delete(user.device_id)"><i class="fa fa-trash"></i></button>
+            </div></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</body>
+</html>
+    
+<script>
+        //for show data into table
+        var app=angular.module('myApp',[]);
+		angular.module('myApp', ['myApp.controllers','datatables']);
+        angular.module('myApp.controllers', []).controller('deviceCtrl', function($scope,$http,DTOptionsBuilder, DTColumnBuilder) {
+        
+            $scope.init=function(){
+            $http.get("getalldevice.php").then(function(response){
+            if(response.data.code == 200) {
+                  $scope.code=response.data.code;
+                  $scope.device = response.data.device;   
+            }
+        });
+		$scope.vm = {};
+
+		$scope.vm.dtOptions = DTOptionsBuilder.newOptions()
+		  .withOption('order', [0, 'asc']);
+        
+        };
+            
+            //for delete device
+            $scope.delete = function(userid){
+ 
+                    $http.get("delete.php?id="+userid).then(function(response){
+                        if(response.data.code == 200) {
+                          $scope.code=response.data.code;
+                          $scope.init();
+                        }
+                    });
+
+            };
+            
+            
+             //for send command
+            $scope.sendcommand = function(token,userid,msg){
+ 
+                    $http.get("noti.php?token="+token+"&msg="+msg).then(function(response){
+                        var data=JSON.parse(response.data);
+                        if(data.success==1){
+                              $http.get("update.php?token="+userid+"&msg="+msg).then(function(response){
+                                    if(response.data.code==200)
+                                        $scope.init();
+                                });
+                        }
+                    });
+            };
+		 });
+    
+       
+       
+
+</script>
